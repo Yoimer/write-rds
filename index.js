@@ -132,6 +132,7 @@ exports.handler = (event, context, callback) => {
      }
     
     console.log("Hola soy lambda");
-    data_write(event);
+    //data_write(event);
+    read_location(event.id)
    
 }
