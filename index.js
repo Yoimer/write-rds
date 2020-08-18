@@ -2,10 +2,23 @@ const mysql = require('mysql');
 const AWS = require('aws-sdk');
 const attr = require('dynamodb-data-types').AttributeValue;
 const ddb = new AWS.DynamoDB({region: 'us-west-2'});
-const docClient = new AWS.DynamoDB.DocumentClient({region: 'us-west-2'});
 
 exports.handler = (event, context, callback) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
+    
+    // function for clean values and convert values in type string 
+    function convert_value(v,p='q') {
+        if (v === null || v === undefined) {
+            return '';
+        } else {
+            if (p === 'q')
+                return v.replace(/^"(.*)"$/, '$1');
+            else if (p === 's') 
+                return JSON.stringify(v);
+            else if (p === 'qs') 
+                return JSON.stringify(v).replace(/^"(.*)"$/, '$1');
+          }
+    }
     
     // function for send data of dynamodb to database MySQL
     function data_write(mydata) {
@@ -17,19 +30,19 @@ exports.handler = (event, context, callback) => {
               port: process.env.RDS_PORT,
               database: process.env.RDS_DATABASE
         });
-    
-        var id = JSON.stringify(mydata.id).replace(/^"(.*)"$/, '$1');
-        var siteid = JSON.stringify(mydata.site_id).replace(/^"(.*)"$/, '$1');
+
+        var id = convert_value(mydata.id,'qs');
+        var siteid = convert_value(mydata.site_id,'s');
+        var site = convert_value(mydata.site); 
+        var location = convert_value(mydata.address);
         var timestamp = Date.now();
-        var latitude = mydata.latitude.replace(/^"(.*)"$/, '$1');
-        var longitude = mydata.longitude.replace(/^"(.*)"$/, '$1');
-        var site = mydata.site.replace(/^"(.*)"$/, '$1');
-        var location = mydata.address.replace(/^"(.*)"$/, '$1');
-        var temperature = mydata.temperature.replace(/^"(.*)"$/, '$1');
-        var humidity = mydata.humidity.replace(/^"(.*)"$/, '$1');
-        var pressure = mydata.pressure.replace(/^"(.*)"$/, '$1');
-        var co2 = mydata.co2.replace(/^"(.*)"$/, '$1');
-        var lpg = mydata.lpg.replace(/^"(.*)"$/, '$1');
+        var latitude = mydata.latitude;
+        var longitude = mydata.longitude;
+        var temperature = mydata.temperature;
+        var humidity = mydata.humidity;
+        var pressure = mydata.pressure;
+        var co2 = mydata.co2;
+        var lpg = mydata.lpg;
         var registers = "INSERT INTO SENSORS (id," +
                                              "timestamp," +
                                              "temperature," +
@@ -101,5 +114,5 @@ exports.handler = (event, context, callback) => {
      }
      
      // main function
-    read_location(event)
-}
+    read_location(event);
+};
